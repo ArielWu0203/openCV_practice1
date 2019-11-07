@@ -1,7 +1,7 @@
 from PyQt5 import QtCore,QtGui,QtWidgets
 from PyQt5.QtWidgets import QApplication, QDialog
 import sys
-import convolution
+import UI.convolution as convolution
 import numpy as np
 import cv2
 from scipy import signal
@@ -20,6 +20,11 @@ class convolApp(QtWidgets.QDialog , convolution.Ui_Dialog):
         self.btn14.clicked.connect(self.btn14_Clicked)
         self.btn21.clicked.connect(self.btn21_Clicked)
         self.btn22.clicked.connect(self.btn22_Clicked)
+        self.btn31.clicked.connect(self.btn31_Clicked)
+        self.btn32.clicked.connect(self.btn32_Clicked)
+        self.count = 0
+        self.pts1 = []
+        self.pts2 = np.float32([[20,20],[450,20],[450,450],[20,450]])
         self.btn41.clicked.connect(self.btn41_Clicked)
         self.btn42.clicked.connect(self.btn42_Clicked)
         self.btn43.clicked.connect(self.btn43_Clicked)
@@ -74,6 +79,48 @@ class convolApp(QtWidgets.QDialog , convolution.Ui_Dialog):
         cv2.imshow("Before", image)
         cv2.imshow("After", dst)
 
+    def btn31_Clicked(self):
+        image = cv2.imread("res/OriginalTransform.png")
+        # TODO : translation
+        rows,cols,channel = image.shape
+        tx = int(self.lineEdit_3.text())
+        ty = int(self.lineEdit_4.text())
+        M = np.float32([[1,0,tx], [0,1,ty]])
+        dst = cv2.warpAffine(image,M,(cols,rows))
+
+        # TODO : rotation & scaling
+        center = (130+tx,125+ty)
+        angle = float(self.lineEdit_1.text())
+        scale = float(self.lineEdit_2.text())
+        M = cv2.getRotationMatrix2D(center, angle,scale)
+        dst = cv2.warpAffine(dst,M,(cols,rows))
+        cv2.imshow('Before', image)
+        cv2.imshow('Transformation', dst)
+
+    def btn32_Clicked(self):
+        image = cv2.imread("res/OriginalPerspective.png")
+        cv2.namedWindow('OriginalPerspective', 0)
+        cv2.imshow('OriginalPerspective', image)
+        cv2.setMouseCallback('OriginalPerspective', self.get_point)
+
+    def get_point(self,event,x,y,flag,param):
+        image = cv2.imread("res/OriginalPerspective.png")
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.count += 1
+            if self.count == 1:
+                self.pts1 = np.float32([[x,y]])
+            else :
+                temp = np.float32([[x,y]])
+                self.pts1 = np.vstack((self.pts1, temp))
+            if self.count == 4:
+                M = cv2.getPerspectiveTransform(self.pts1,self.pts2)
+                self.pts1 = np.float32([])
+                self.count = 0
+                rows,cols,channel = image.shape
+                dst = cv2.warpPerspective(image,M,(450,450))
+                cv2.imshow("Result",dst)
+                
+            
     def btn41_Clicked(self):
         # 3x3 Gaussian filter
         x, y = np.mgrid[-1:2, -1:2]

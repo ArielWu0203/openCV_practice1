@@ -1,7 +1,7 @@
 from PyQt5 import QtCore,QtGui,QtWidgets
 from PyQt5.QtWidgets import QApplication, QDialog
 import sys
-import mnist_dialog
+import UI.mnist_dialog as mnist_dialog
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
